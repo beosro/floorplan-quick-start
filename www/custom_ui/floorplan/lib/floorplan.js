@@ -1,6 +1,6 @@
 /*
  Floorplan for Home Assistant
- Version: 1.0.7.51
+ Version: 1.0.7.52
  By Petar Kozul
  https://github.com/pkozul/ha-floorplan
 */
@@ -14,7 +14,7 @@
 
   class Floorplan {
     constructor() {
-      this.version = '1.0.7.51';
+      this.version = '1.0.7.52';
       this.doc = {};
       this.hass = {};
       this.openMoreInfo = () => { };
@@ -263,9 +263,9 @@
 
         this.loadStyleSheetInternal(stylesheetUrl, function (success, link) {
           if (success && link && link.sheet && link.sheet.cssRules) {
+            let cssRules = this.instance.getArray(link.sheet.cssRules);
             this.instance.doc.appendChild(link);
-            let styleSheet = link.sheet;
-            this.instance.cssRules = this.instance.cssRules.concat(this.instance.getArray(styleSheet.cssRules));
+            this.instance.cssRules = this.instance.cssRules.concat(cssRules);
             return this.resolve();
           }
           else {
@@ -450,13 +450,13 @@
           let pageInfo = this.pageInfos[key];
 
           $(pageInfo.svg).css('opacity', 1);
-          $(pageInfo.svg).css('display', pageInfo.isMaster || pageInfo.isDefault ? 'initial' : 'none'); // Show the first page
+          $(pageInfo.svg).css('visibility', pageInfo.isMaster || pageInfo.isDefault ? 'initial' : 'hidden'); // Show the first page
         });
       }
       else {
         // Show the SVG
         $(this.config.svg).css('opacity', 1);
-        $(this.config.svg).css('display', 'initial');
+        $(this.config.svg).css('visibility', 'initial');
       }
     }
 
@@ -1384,14 +1384,8 @@
 
       let ratio = isExpired ? 1 : (nowMoment - transition.startMoment) / (transition.endMoment - transition.startMoment);
       let color = this.getTransitionColor(transition.fromColor, transition.toColor, ratio);
-
       //this.logDebug('TRANSITION', `${transition.entityId} (ratio: ${ratio}, element: ${transition.svgElementInfo.svgElement.id}, fill: ${color})`);
       transition.svgElementInfo.svgElement.style.fill = color;
-      $(transition.svgElementInfo.svgElement).find('*').each((i, svgNestedElement) => {
-        if (!$(svgNestedElement).hasClass('ha-leave-me-alone')) {
-          svgNestedElement.style.fill = color;
-        }
-      });
 
       if (isExpired) {
         transition.isActive = false;
@@ -1600,8 +1594,8 @@
               let pageInfo = this.pageInfos[key];
 
               if (!pageInfo.isMaster) {
-                if ($(pageInfo.svg).css('display') !== 'none') {
-                  $(pageInfo.svg).css('display', 'none');
+                if ($(pageInfo.svg).css('visibility') !== 'hidden') {
+                  $(pageInfo.svg).css('visibility', 'hidden');
                 }
               }
             });
@@ -1853,23 +1847,27 @@
         sheet = 'styleSheet'; cssRules = 'rules';
       }
 
-      let intervalId = setInterval(function () {                     // start checking whether the style sheet has successfully loaded
+      let intervalId = setInterval(function () {             // start checking whether the style sheet has successfully loaded
         try {
-          if (link[sheet] && link[sheet][cssRules].length) { // SUCCESS! our style sheet has loaded
-            clearInterval(intervalId);                      // clear the counters
+          if (link[sheet]) {                                 // SUCCESS! our style sheet has loaded
+            clearInterval(intervalId);                       // clear the counters
             clearTimeout(timeoutId);
-            fn.call(scope || window, true, link);           // fire the callback with success == true
+            setTimeout(function () {
+              if (link[sheet][cssRules].length) {            // SUCCESS! our style sheet has loaded
+                fn.call(scope || window, true, link);        // fire the callback with success == true
+              }
+            }, 100);
           }
         }
         catch (e) { console.error(e); debugger; }
         finally { }
-      }, 10),                                               // how often to check if the stylesheet is loaded
-        timeoutId = setTimeout(function () {                // start counting down till fail
-          clearInterval(intervalId);                        // clear the counters
+      }, 1000),                                              // how often to check if the stylesheet is loaded
+        timeoutId = setTimeout(function () {                 // start counting down till fail
+          clearInterval(intervalId);                         // clear the counters
           clearTimeout(timeoutId);
-          head.removeChild(link);                           // since the style sheet didn't load, remove the link node from the DOM
-          fn.call(scope || window, false, link);            // fire the callback with success == false
-        }, 15000);                                          // how long to wait before failing
+          head.removeChild(link);                            // since the style sheet didn't load, remove the link node from the DOM
+          fn.call(scope || window, false, link);             // fire the callback with success == false
+        }, 15000);                                           // how long to wait before failing
 
       head.appendChild(link);  // insert the link node into the DOM and start loading the style sheet
 
