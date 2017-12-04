@@ -450,13 +450,13 @@
           let pageInfo = this.pageInfos[key];
 
           $(pageInfo.svg).css('opacity', 1);
-          $(pageInfo.svg).css('visibility', pageInfo.isMaster || pageInfo.isDefault ? 'initial' : 'hidden'); // Show the first page
+          $(pageInfo.svg).css('visibility', pageInfo.isMaster || pageInfo.isDefault ? 'visible' : 'hidden'); // Show the first page
         });
       }
       else {
         // Show the SVG
         $(this.config.svg).css('opacity', 1);
-        $(this.config.svg).css('visibility', 'initial');
+        $(this.config.svg).css('visibility', 'visible');
       }
     }
 
@@ -1600,7 +1600,7 @@
               }
             });
 
-            $(targetPageInfo.svg).css('display', 'initial');
+            $(targetPageInfo.svg).css('visibility', 'visible');
           }
           break;
 
