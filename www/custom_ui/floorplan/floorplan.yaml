@@ -1,0 +1,31 @@
+image: /local/custom_ui/floorplan/floorplan.svg
+#stylesheet: /local/custom_ui/floorplan/floorplan.css
+log_level: warning
+
+rules:
+
+  - entities:
+      - entity: sensor.derrimut_dark_sky_hourly_summary
+        element: sensor.dark_sky_icon
+    image_template: '
+      let imageName = "";
+      switch (entity.attributes.entity_picture) {
+        case "/static/images/darksky/weather-sunny.svg":
+          imageName = "sunny-1";
+          break;
+        case "/static/images/darksky/weather-night.svg":
+          imageName = "night-1";
+          break;
+        case "/static/images/darksky/weather-partlycloudy.svg":
+        case "/static/images/darksky/weather-cloudy.svg":
+          imageName = "cloudy-day-1";
+          break;
+        case "/static/images/darksky/weather-pouring.svg":
+          imageName = "thunder";
+          break;
+        case "/static/images/darksky/weather-snowy.svg":
+          imageName = "snowy-day-1";
+          break;
+      }
+      return "/local/custom_ui/floorplan/images/weather/" + imageName + ".svg";
+      '
