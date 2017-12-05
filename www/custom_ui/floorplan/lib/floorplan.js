@@ -1,6 +1,6 @@
 /*
  Floorplan for Home Assistant
- Version: 1.0.7.54
+ Version: 1.0.7.55
  By Petar Kozul
  https://github.com/pkozul/ha-floorplan
 */
@@ -14,7 +14,7 @@
 
   class Floorplan {
     constructor() {
-      this.version = '1.0.7.54';
+      this.version = '1.0.7.55';
       this.doc = {};
       this.hass = {};
       this.openMoreInfo = () => { };
@@ -256,23 +256,22 @@
     }
 
     loadStyleSheet(stylesheetUrl) {
-      return new Promise((resolve, reject) => {
-        if (!stylesheetUrl) {
-          return resolve();
-        }
+      if (!stylesheetUrl) {
+        return Promise.resolve();
+      }
 
-        this.loadStyleSheetInternal(stylesheetUrl, function (success, link) {
-          if (success && link && link.sheet && link.sheet.cssRules) {
-            let cssRules = this.instance.getArray(link.sheet.cssRules);
-            this.instance.doc.appendChild(link);
-            this.instance.cssRules = this.instance.cssRules.concat(cssRules);
-            return this.resolve();
-          }
-          else {
-            reject(new URIError(`${stylesheetUrl}`));
-          }
-        }.bind({ instance: this, resolve: resolve, reject: reject }));
-      });
+      return this.fetchTextResource(stylesheetUrl, false)
+        .then(stylesheet => {
+          let link = document.createElement('style');
+          link.type = 'text/css';
+          link.innerHTML = stylesheet;
+          this.doc.appendChild(link);
+          
+          let cssRules = this.getArray(link.sheet.cssRules);
+          this.cssRules = this.cssRules.concat(cssRules);
+
+          return Promise.resolve();
+        });
     }
 
     loadFloorplanSvg(imageUrl, pageInfo, masterPageInfo) {
@@ -1836,49 +1835,6 @@
     getTransitionColor(fromColor, toColor, value) {
       return (value <= 0) ? fromColor :
         ((value >= 1) ? toColor : this.rgbToHex(this.mix(this.hexToRgb(toColor), this.hexToRgb(fromColor), value)));
-    }
-
-    loadStyleSheetInternal(path, fn, scope) {
-      let head = document.getElementsByTagName('head')[0]; // reference to document.head for appending / removing link nodes
-      let link = document.createElement('link');           // create the link node
-      link.setAttribute('href', this.cacheBuster(path));
-      link.setAttribute('rel', 'stylesheet');
-      link.setAttribute('type', 'text/css');
-
-      let sheet, cssRules;
-      // get the correct properties to check for depending on the browser
-      if ('sheet' in link) {
-        sheet = 'sheet'; cssRules = 'cssRules';
-      }
-      else {
-        sheet = 'styleSheet'; cssRules = 'rules';
-      }
-
-      let intervalId = setInterval(function () {             // start checking whether the style sheet has successfully loaded
-        try {
-          if (link[sheet]) {                                 // SUCCESS! our style sheet has loaded
-            clearInterval(intervalId);                       // clear the counters
-            clearTimeout(timeoutId);
-            setTimeout(function () {
-              if (link[sheet][cssRules].length) {            // SUCCESS! our style sheet has loaded
-                fn.call(scope || window, true, link);        // fire the callback with success == true
-              }
-            }, 100);
-          }
-        }
-        catch (e) { console.error(e); debugger; }
-        finally { }
-      }, 1000),                                              // how often to check if the stylesheet is loaded
-        timeoutId = setTimeout(function () {                 // start counting down till fail
-          clearInterval(intervalId);                         // clear the counters
-          clearTimeout(timeoutId);
-          head.removeChild(link);                            // since the style sheet didn't load, remove the link node from the DOM
-          fn.call(scope || window, false, link);             // fire the callback with success == false
-        }, 15000);                                           // how long to wait before failing
-
-      head.appendChild(link);  // insert the link node into the DOM and start loading the style sheet
-
-      return link; // return the link node
     }
 
     /***************************************************************************************************************************/
