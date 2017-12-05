@@ -1,6 +1,6 @@
 /*
  Floorplan for Home Assistant
- Version: 1.0.7.53
+ Version: 1.0.7.54
  By Petar Kozul
  https://github.com/pkozul/ha-floorplan
 */
@@ -14,7 +14,7 @@
 
   class Floorplan {
     constructor() {
-      this.version = '1.0.7.53';
+      this.version = '1.0.7.54';
       this.doc = {};
       this.hass = {};
       this.openMoreInfo = () => { };
@@ -769,8 +769,6 @@
         .css('fill-opacity', 0);
 
       $(rect).insertBefore(svgElement);
-
-      svgElementInfo.backgroundRectBBox = bbox;
     }
 
     addSvgElementToRule(svg, svgElement, ruleInfo) {
@@ -1093,8 +1091,9 @@
         let rect = $(svgElement).parent().find(`[id="${entityId}.background"]`);
         if (rect.length) {
           if ($(svgElement).css('display') != 'none') {
-            let bbox = svgElementInfo.backgroundRectBBox;
-            if (bbox) {
+            let parentSvg = $(svgElement).parents('svg').eq(0);
+            if ($(parentSvg).css('display') !== 'none') {
+              let bbox = svgElement.getBBox();
               $(rect)
                 .attr('x', bbox.x - 1)
                 .attr('y', bbox.y - 0.5)
