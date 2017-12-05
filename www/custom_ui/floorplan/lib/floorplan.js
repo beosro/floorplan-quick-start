@@ -104,7 +104,7 @@
           this.config.svg = svg;
           return this.loadStyleSheet(this.config.stylesheet)
             .then(() => {
-              return Promise.resolve(this.initFloorplan(svg, this.config))
+              return this.initFloorplan(svg, this.config)
                 .then(() => {
                   this.setIsLoading(false);
                   this.initPageDisplay();
@@ -554,13 +554,15 @@
 
     initFloorplan(svg, config) {
       if (!config.rules) {
-        return;
+        return Promise.resolve();;
       }
 
       let svgElements = $(svg).find('*').toArray();
 
       this.initLastMotion(config, svg, svgElements);
       this.initRules(config, svg, svgElements);
+
+      return Promise.resolve();;
     }
 
     initLastMotion(config, svg, svgElements) {
