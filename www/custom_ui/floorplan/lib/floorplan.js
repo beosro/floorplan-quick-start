@@ -1,6 +1,6 @@
 /*
  Floorplan for Home Assistant
- Version: 1.0.7.52
+ Version: 1.0.7.53
  By Petar Kozul
  https://github.com/pkozul/ha-floorplan
 */
@@ -14,7 +14,7 @@
 
   class Floorplan {
     constructor() {
-      this.version = '1.0.7.52';
+      this.version = '1.0.7.53';
       this.doc = {};
       this.hass = {};
       this.openMoreInfo = () => { };
@@ -450,13 +450,13 @@
           let pageInfo = this.pageInfos[key];
 
           $(pageInfo.svg).css('opacity', 1);
-          $(pageInfo.svg).css('visibility', pageInfo.isMaster || pageInfo.isDefault ? 'visible' : 'hidden'); // Show the first page
+          $(pageInfo.svg).css('display', pageInfo.isMaster || pageInfo.isDefault ? 'initial' : 'none'); // Show the first page
         });
       }
       else {
         // Show the SVG
         $(this.config.svg).css('opacity', 1);
-        $(this.config.svg).css('visibility', 'visible');
+        $(this.config.svg).css('display', 'initial');
       }
     }
 
@@ -630,7 +630,7 @@
           if ($svgElement.is('text') && ($svgElement[0].id === elementId)) {
             let backgroundSvgElement = svgElements.find(svgElement => svgElement.id === ($svgElement[0].id + '.background'));
             if (!backgroundSvgElement) {
-              this.addBackgroundRectToText($svgElement[0]);
+              this.addBackgroundRectToText(svgElementInfo);
             }
             else {
               svgElementInfo.alreadyHadBackground = true;
@@ -724,7 +724,7 @@
           if ($svgElement.is('text') && ($svgElement[0].id === elementId)) {
             let backgroundSvgElement = svgElements.find(svgElement => svgElement.id === ($svgElement[0].id + '.background'));
             if (!backgroundSvgElement) {
-              this.addBackgroundRectToText($svgElement[0]);
+              this.addBackgroundRectToText(svgElementInfo);
             }
             else {
               svgElementInfo.alreadyHadBackground = true;
@@ -755,7 +755,9 @@
       }
     }
 
-    addBackgroundRectToText(svgElement) {
+    addBackgroundRectToText(svgElementInfo) {
+      let svgElement = svgElementInfo.svgElement;
+
       let bbox = svgElement.getBBox();
 
       let rect = $(document.createElementNS('http://www.w3.org/2000/svg', 'rect'))
@@ -767,6 +769,8 @@
         .css('fill-opacity', 0);
 
       $(rect).insertBefore(svgElement);
+
+      svgElementInfo.backgroundRectBBox = bbox;
     }
 
     addSvgElementToRule(svg, svgElement, ruleInfo) {
@@ -1088,14 +1092,18 @@
       if (!svgElementInfo.alreadyHadBackground) {
         let rect = $(svgElement).parent().find(`[id="${entityId}.background"]`);
         if (rect.length) {
-          let bbox = svgElement.getBBox();
-          $(rect)
-            .attr('x', bbox.x - 1)
-            .attr('y', bbox.y - 0.5)
-            .attr('height', bbox.height + 1)
-            .attr('width', bbox.width + 2)
-            .height(bbox.height + 1)
-            .width(bbox.width + 2);
+          if ($(svgElement).css('display') != 'none') {
+            let bbox = svgElementInfo.backgroundRectBBox;
+            if (bbox) {
+              $(rect)
+                .attr('x', bbox.x - 1)
+                .attr('y', bbox.y - 0.5)
+                .attr('height', bbox.height + 1)
+                .attr('width', bbox.width + 2)
+                .height(bbox.height + 1)
+                .width(bbox.width + 2);
+            }
+          }
         }
       }
     }
@@ -1594,13 +1602,13 @@
               let pageInfo = this.pageInfos[key];
 
               if (!pageInfo.isMaster) {
-                if ($(pageInfo.svg).css('visibility') !== 'hidden') {
-                  $(pageInfo.svg).css('visibility', 'hidden');
+                if ($(pageInfo.svg).css('display') !== 'none') {
+                  $(pageInfo.svg).css('display', 'none');
                 }
               }
             });
 
-            $(targetPageInfo.svg).css('visibility', 'visible');
+            $(targetPageInfo.svg).css('display', 'initial');
           }
           break;
 
